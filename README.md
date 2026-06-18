@@ -83,30 +83,59 @@ The Rule Validator performs automated checks before any rule is proposed:
 
 ---
 
-## Getting Started
+## Prerequisites & Installation
 
-1. **Setup**:
-   ```bash
-   cd bin
-   npm install
-   npm run setup
-   ```
+To run the agent, compile the validators, and execute the transformation tests, your local machine must meet the following prerequisites:
 
-2. **Workflow**:
-   - Place your metamodel in `workspace/my-domain.ecore`.
-   - Place your example model in `workspace/example.xmi`.
-   - Describe the transformation to the agent.
-   - The agent will generate rules in `output/`.
+### 1. System Requirements
+* **Java Development Kit (JDK 11 or higher)**:
+  - Required to compile and run the Java core of the Henshin engine validator (`javac` and `java` must be globally available in your system path).
+  - Check your version:
+    ```bash
+    java -version
+    javac -version
+    ```
+* **Node.js (v16.x or higher)**:
+  - Required to execute the wrapper/orchestration scripts and the CLI interface.
+  - Check your version:
+    ```bash
+    node -v
+    ```
+* **Internet Connection**:
+  - Required during the setup step to pull Eclipse EMF and Henshin dependency JAR files directly from Eclipse and Maven Central repository mirrors.
 
-3. **Validation**:
-   The agent will automatically run the validation scripts. You can also run them manually:
-   ```bash
-   # Example: Validate structure
-   node bin/validate.mjs --validate-structure output/my-rule.henshin
-   
-   # Example: Validate semantic
-   node bin/validate.mjs --validate-semantic output/my-rule.henshin --metamodel workspace/my-domain.ecore
-   
-   # Example: Apply rule
-   node bin/validate.mjs --apply output/my-rule.henshin --metamodel workspace/my-domain.ecore --model workspace/example.xmi --rule MyRule
-   ```
+### 2. Setup and Installation
+Navigate to the validator directory, restore its dependencies, and execute the automatic downloader and compiler script:
+
+```bash
+# Navigate to the bin directory containing the validator configuration
+cd bin
+
+# Install NPM dependencies (like node-fetch used by the installer)
+npm install
+
+# Run the automatic setup (Downloads Henshin & EMF jars and compiles HenshinValidator.java)
+npm run setup
+```
+
+Once completed, you should see `Compilation successful.` and find the compiled `HenshinValidator.class` along with all needed `.jar` libraries inside the `bin/lib/` folder.
+
+---
+
+## How to Run Validation
+
+The validation suite runs automatically during the agent's generation loop, but you can also execute the validator CLI manually for quick testing:
+
+```bash
+# 1. Tier 1: Validate Structural Well-formedness (Checks XMI syntax and Henshin schema)
+node bin/validate.mjs --validate-structure output/my-rule.henshin
+
+# 2. Tier 2: Validate Semantic Bindings (Checks type references against Ecore)
+node bin/validate.mjs --validate-semantic output/my-rule.henshin --metamodel workspace/my-domain.ecore
+
+# 3. Tier 3: Apply Rule on Input Instance (Applies rule onto instance and outputs to out_result.xmi)
+node bin/validate.mjs --apply output/my-rule.henshin --metamodel workspace/my-domain.ecore --model workspace/example.xmi --rule MyRuleName
+
+# 4. Run full Three-Tier Validation on a rule using the helper script:
+./scripts/validate-all.sh output/my-rule.henshin workspace/my-domain.ecore workspace/example.xmi MyRuleName
+```
