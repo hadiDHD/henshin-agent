@@ -53,16 +53,66 @@ Our methodology treats model transformation (MT) rule construction as an iterati
 ### Core Components
 
 1. **User (Human-in-the-Loop)**:
-   - **Provides**: An Ecore metamodel (`.ecore`), an example XMI model (`.xmi`), and a natural-language description of the target change.
-   - **Triggers**: Initiates the agentic creation process.
-   - **Evaluates**: Evaluates proposed candidate rules and generated test cases, accepting them into the transformation library or rejecting them with fault descriptions.
+   - **Provide**: An Ecore metamodel (`.ecore`), an example XMI model (`.xmi`), and a natural-language description of the target change.
+   - **Consult**: Clarify intent when prompted by the agent mid-loop.
+   - **Evaluate**: Review proposed candidate rules and generated test cases, accepting them into the transformation library or rejecting them with fault descriptions.
 
 2. **Agentic AI Setup**:
    - **LLM-based MT Rule Creation Agent**: Orchestrates the entire process, analyzing models and synthesizing candidates.
-   - **Knowledge Base (Patterns & Playbook)**: Located in the `wiki/` directory, containing high-density guides, common error resolutions, and patterns (such as Negative Application Conditions, loop constructs, and parameter passing).
-   - **Rule Generator**: Generates the underlying Henshin rule candidate XML file structure.
-   - **Example Generator**: Generates or refines tailored test input models (XMI) to surface edge cases and bring fault-detection forward into the rule authoring phase rather than execution time.
-   - **Rule Validator (Syntax, Semantics, Context)**: Provides robust Three-Tier Validation on the candidates.
+   - **Knowledge Base (Wiki + Learned)**: Unified repository of patterns (`wiki/`) and project-specific experiential knowledge (`wiki/learned/`).
+   - **Rule Generator**: Manages session state and Henshin rule candidate versioning.
+   - **Example Generator**: Creates tailored test input models (XMI) to surface edge cases and bring fault-detection forward.
+   - **Rule Validator**: Provides Three-Tier Validation (Structural, Semantic, Applicability) matching the Syntax/Semantics/Context domains.
+
+---
+
+## Tool CLI Cheat Sheet
+
+### Session Management
+```bash
+# Initialize a new transformation session
+node tools/rule-generator/cli.mjs init --session <id> --metamodel <path> --seed-model <path>
+
+# Check session status (latest rule, validation, consults)
+bash scripts/session-status.sh <id>
+```
+
+### Intent & Consultation
+```bash
+# Open a consultation for the user
+node tools/consult/cli.mjs open --session <id> --trigger <CODE> --question "..."
+
+# Resolve intent after user reply
+node tools/consult/cli.mjs resolve --session <id>
+```
+
+### Rule & Example Generation
+```bash
+# Register a new candidate rule version
+node tools/rule-generator/cli.mjs write --session <id> --rule-name <name> --file <temp-path>
+
+# Generate a positive tailored example model
+node tools/example-generator/cli.mjs write --session <id> --role positive --file <path> --rule-version <n>
+```
+
+### Evaluation & KB Enrichment
+```bash
+# Build evaluation payload for the user
+node tools/evaluation/cli.mjs build --session <id> --rule-version <n>
+
+# Record user verdict
+node tools/evaluation/cli.mjs decide --session <id> --verdict accept|reject
+
+# Accept rule into library and enrich KB
+node tools/kb-enrich/cli.mjs accept --session <id>
+```
+
+---
+
+## Framework Development
+For details on the iterative development and gap-closure of this framework, see [scaffolding/framework-gaps/README.md](./scaffolding/framework-gaps/README.md).
+
+---
 
 ### Three-Tier Validation Loop
 
@@ -75,10 +125,14 @@ The Rule Validator performs automated checks before any rule is proposed:
 
 ## Directory Structure
 
-- `wiki/`: Unified, high-density, agent-optimized knowledge base containing patterns, metamodel bindings, the validation playbook, and case studies (Karpathy LLM Wiki Pattern).
-- `workspace/`: Location for user-provided metamodels (`.ecore`) and example models (`.xmi`).
-- `output/`: Location for successfully validated, candidate `.henshin` rules.
-- `bin/`: The Node-wrapped Java Henshin Validator tool (`validate.mjs` and `HenshinValidator.java`).
+- `wiki/`: Unified, high-density, agent-optimized knowledge base containing patterns, metamodel bindings, the validation playbook, and case studies.
+- `wiki/learned/`: Agent-maintained enrichment from accepted/rejected rules.
+- `workspace/`: Location for user-provided metamodels (`.ecore`) and seed example models (`.xmi`).
+- `sessions/`: Ephemeral and audit trail data for agent transformation sessions.
+- `library/`: Collection of accepted, reusable rule packages.
+- `tools/`: First-class agent tools (Rule Generator, Example Generator, etc.).
+- `output/`: (Legacy) Location for candidate rules; prefer `sessions/`.
+- `bin/`: The Node-wrapped Java Henshin Validator tool.
 - `scripts/`: Helper scripts for validation automation.
 
 ---

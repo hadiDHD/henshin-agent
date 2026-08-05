@@ -9,6 +9,7 @@ Rapid-access index for the Henshin Agent Wiki.
 | [02_METAMODEL_BINDING.md](./02_METAMODEL_BINDING.md) | Ecore integration, nsURI matching, and structural pathing (`href`). |
 | [03_VALIDATION_PLAYBOOK.md](./03_VALIDATION_PLAYBOOK.md) | Three-Tier Validation, Error Matrix, and debugging workflows. |
 | [04_CASE_STUDIES.md](./04_CASE_STUDIES.md) | MOMoT2 domain specifications, Ecore schemas, and verification commands. |
+| [learned/00_LEARNED_INDEX.md](./learned/00_LEARNED_INDEX.md) | Experiential knowledge, project-specific patterns, and learned anti-patterns. |
 
 ## 2. Core Keyword Mapping
 

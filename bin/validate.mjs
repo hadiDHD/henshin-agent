@@ -57,7 +57,7 @@ async function setup() {
   for (const jar of JARS) {
     const jarPath = join(LIB_DIR, jar.name);
     if (!existsSync(jarPath)) {
-      console.log(`Downloading ${jar.name}...`);
+      console.error(`Downloading ${jar.name}...`);
       const response = await fetch(jar.url);
       if (!response.ok) throw new Error(`Failed to download ${jar.name}: ${response.statusText}`);
       const buffer = Buffer.from(await response.arrayBuffer());
@@ -66,14 +66,14 @@ async function setup() {
   }
 
   // Compile Java validator
-  console.log('Compiling HenshinValidator.java...');
+  console.error('Compiling HenshinValidator.java...');
   const classpath = join(LIB_DIR, '*');
   const javac = spawn('javac', ['-cp', classpath, '-d', LIB_DIR, join(SRC_DIR, 'HenshinValidator.java')]);
 
   return new Promise((resolve, reject) => {
     javac.on('close', (code) => {
       if (code === 0) {
-        console.log('Compilation successful.');
+        console.error('Compilation successful.');
         resolve();
       } else {
         reject(new Error(`javac failed with code ${code}`));
@@ -87,10 +87,72 @@ async function run(args) {
   const classpath = join(LIB_DIR, '*') + sep + LIB_DIR;
   const java = spawn('java', ['-cp', classpath, 'HenshinValidator', ...args]);
 
-  java.stdout.on('data', (data) => process.stdout.write(data));
-  java.stderr.on('data', (data) => process.stderr.write(data));
+  let stdout = '';
+  let stderr = '';
 
-  java.on('close', (code) => process.exit(code));
+  java.stdout.on('data', (data) => {
+    const str = data.toString();
+    stdout += str;
+    process.stderr.write(str);
+  });
+
+  java.stderr.on('data', (data) => {
+    const str = data.toString();
+    stderr += str;
+    process.stderr.write(str);
+  });
+
+  java.on('close', (code) => {
+    if (code === 0) {
+      // Robust JSON parsing: find valid JSON objects in stdout
+      const artifacts = [];
+      const results = {};
+      
+      let startIdx = 0;
+      while ((startIdx = stdout.indexOf('{', startIdx)) !== -1) {
+        let endIdx = stdout.lastIndexOf('}');
+        let found = false;
+        
+        while (endIdx > startIdx) {
+          const candidate = stdout.substring(startIdx, endIdx + 1);
+          try {
+            const obj = JSON.parse(candidate);
+            Object.assign(results, obj);
+            if (obj.result) {
+              artifacts.push({ type: 'xmi_result', path: obj.result });
+            }
+            startIdx = endIdx + 1;
+            found = true;
+            break;
+          } catch (e) {
+            endIdx = stdout.lastIndexOf('}', endIdx - 1);
+          }
+        }
+        if (!found) startIdx++;
+      }
+
+      // Tier 3 failure (applied: false) should return ok: false
+      const ok = results.applied !== false;
+      
+      const envelope = {
+        ok,
+        tool: 'validator',
+        artifacts,
+        results,
+        message: results.applied === false ? 'Rule not applied' : 'Validation successful'
+      };
+      console.log(JSON.stringify(envelope, null, 2));
+    } else {
+      const envelope = {
+        ok: false,
+        tool: 'validator',
+        message: 'Validation failed',
+        errors: [{ code: 'E_VALIDATOR', detail: stderr.trim() || 'Check stderr for details' }]
+      };
+      console.log(JSON.stringify(envelope, null, 2));
+      process.exit(code);
+    }
+  });
 }
 
 const args = process.argv.slice(2);

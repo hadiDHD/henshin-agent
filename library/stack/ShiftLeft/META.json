@@ -1,0 +1,12 @@
+{
+  "ruleName": "ShiftLeft",
+  "domain": "stack",
+  "sessionId": "verify-full-suite",
+  "acceptedAt": "2026-08-05T12:46:03.801Z",
+  "metamodelNsURI": "http://momot.big.tuwien.ac.at/stack/1.0",
+  "metamodelPath": "workspace/stack/stack.ecore",
+  "sourceRuleVersion": 1,
+  "tags": [
+    "verify suite accept test"
+  ]
+}
