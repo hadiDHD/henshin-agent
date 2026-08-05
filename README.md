@@ -109,11 +109,6 @@ node tools/kb-enrich/cli.mjs accept --session <id>
 
 ---
 
-## Framework Development
-For details on the iterative development and gap-closure of this framework, see [scaffolding/framework-gaps/README.md](./scaffolding/framework-gaps/README.md).
-
----
-
 ### Three-Tier Validation Loop
 
 The Rule Validator performs automated checks before any rule is proposed:

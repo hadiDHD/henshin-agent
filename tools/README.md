@@ -13,4 +13,4 @@ This directory contains first-class tools used by the Henshin Transformation Age
 | **Evaluation** | Packages candidates and examples for user evaluation. | `node tools/evaluation/cli.mjs` |
 | **KB Enrich** | Persists accepted rules and learned patterns into library/wiki. | `node tools/kb-enrich/cli.mjs` |
 
-All tools follow the contract defined in `scaffolding/framework-gaps/00_ARCHITECTURE_CONTRACT.md`.
+All tools follow the system architecture contract defined in `AGENTS.md`.
